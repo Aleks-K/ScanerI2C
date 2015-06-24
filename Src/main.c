@@ -53,6 +53,8 @@ I2C_HandleTypeDef hi2c1;
 /* USER CODE BEGIN PV */
 
 uint8_t PutCharBuff;
+uint32_t scanTime;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -61,6 +63,8 @@ static void MX_GPIO_Init(void);
 static void MX_I2C1_Init(void);
 
 /* USER CODE BEGIN PFP */
+
+void PrintVersion();
 
 #ifdef __GNUC__
   /* With GCC/RAISONANCE, small printf (option LD Linker->Libraries->Small printf
@@ -105,6 +109,23 @@ int main(void)
   while (1)
   {
   /* USER CODE END WHILE */
+    
+    uint32_t time = HAL_GetTick();
+    if (scanTime + 1000 <= time)
+    {
+      scanTime = time;
+      PrintVersion();
+      // Scan I2C devices
+      printf("Find I2C devices...\r\n");
+      uint8_t foundDevices = 0;
+      for (uint8_t address = 15; address <= 127; address++)
+      {
+        HAL_StatusTypeDef status = HAL_I2C_IsDeviceReady(&hi2c1, address << 1, 10, 100);
+        if (status == HAL_OK)
+          printf("Found new device: 0x%02X\r\n", address);
+      }
+      printf("Found %d devices\r\n", foundDevices);
+    }
 
   /* USER CODE BEGIN 3 */
 
@@ -196,6 +217,23 @@ void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+
+void PrintVersion()
+{
+  printf("\r\n");
+#if defined(__TIME__) & defined(__DATE__)
+  printf("Build at %s %s\r\n", __DATE__, __TIME__);
+#endif
+#if defined(COMMIT_SHA_0)
+  printf("Commit %08x%08x%08x%08x%08x", COMMIT_SHA_0, COMMIT_SHA_1, COMMIT_SHA_2, COMMIT_SHA_3, COMMIT_SHA_4);
+  if (COMMIT_IS_CLEAN)
+    printf("\r\n");
+  else
+    printf(" Not clean\r\n");
+  printf("Commit at %d-%02d-%02d %02d:%02d:%02d\r\n", COMMIT_DATE_Y, COMMIT_DATE_M, COMMIT_DATE_D, COMMIT_TIME_H, COMMIT_TIME_M, COMMIT_TIME_S);
+  printf("\r\n");
+#endif
+}
 
 PUTCHAR_PROTOTYPE
 {
