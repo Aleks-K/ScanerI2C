@@ -37,6 +37,7 @@
 
 /* USER CODE BEGIN Includes */
 
+#include "usbd_cdc_if.h"
 // TODO: To automatic generate gitinfo.inc put to project options (Alt+F7):
 // 1. General options / Build Actions - Pre-build command line:
 // $PROJ_DIR$\..\gitinfo\gitinfo.exe
@@ -51,6 +52,7 @@ I2C_HandleTypeDef hi2c1;
 
 /* USER CODE BEGIN PV */
 
+uint8_t PutCharBuff;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -59,6 +61,14 @@ static void MX_GPIO_Init(void);
 static void MX_I2C1_Init(void);
 
 /* USER CODE BEGIN PFP */
+
+#ifdef __GNUC__
+  /* With GCC/RAISONANCE, small printf (option LD Linker->Libraries->Small printf
+     set to 'Yes') calls __io_putchar() */
+  #define PUTCHAR_PROTOTYPE int __io_putchar(int ch)
+#else
+  #define PUTCHAR_PROTOTYPE int fputc(int ch, FILE *f)
+#endif /* __GNUC__ */
 
 /* USER CODE END PFP */
 
@@ -186,6 +196,20 @@ void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+
+PUTCHAR_PROTOTYPE
+{
+  /* Place your implementation of fputc here */
+  /* e.g. write a character to the USART */
+  PutCharBuff = (char)ch;
+  uint8_t status = CDC_Transmit_FS(&PutCharBuff, 1);
+  while (status != USBD_OK)
+  {
+    status = CDC_Transmit_FS(&PutCharBuff, 1);
+  }
+
+  return ch;
+}
 
 /* USER CODE END 4 */
 
